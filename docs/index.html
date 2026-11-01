@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEV3 AI Job Listings Assistant for WP Job Manager – Documentation</title>
+<style>
+:root { --ink: #1f2328; --muted: #4b5563; --line: #e3e6eb; --brand: #4f46e5; --soft: #eef2ff; --code: #f6f8fa; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var( --ink ); background: #fff; }
+header { background: linear-gradient( 120deg, #4f46e5, #7c3aed ); color: #fff; padding: 40px 20px; }
+header .wrap { max-width: 920px; margin: 0 auto; }
+header h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.25; }
+header p { margin: 0; opacity: .92; }
+main { max-width: 920px; margin: 0 auto; padding: 24px 20px 64px; }
+nav { background: var( --soft ); border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; }
+nav ol { margin: 0; padding-left: 20px; columns: 2; }
+@media ( max-width: 600px ) { nav ol { columns: 1; } }
+h2 { margin: 40px 0 12px; padding-top: 8px; border-top: 1px solid var( --line ); font-size: 22px; }
+h3 { margin: 24px 0 8px; font-size: 17px; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; background: var( --code ); border-radius: 4px; }
+code { padding: 1px 5px; }
+pre { padding: 12px 16px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var( --line ); vertical-align: top; }
+th { background: var( --code ); }
+.note { background: #fff7e6; border-left: 4px solid #d97706; padding: 10px 14px; border-radius: 4px; }
+.ok { background: #ecfdf5; border-left: 4px solid #047857; padding: 10px 14px; border-radius: 4px; }
+img { max-width: 100%; border: 1px solid var( --line ); border-radius: 8px; }
+.table-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>DEV3 AI Job Listings Assistant for WP Job Manager</h1>
+<p>Version 1.0.0 · by DEV3 Technologies · Requires WordPress 6.0+ (WP Job Manager itself needs 6.4+), PHP 7.4+ and the free WP Job Manager plugin.</p>
+</div></header>
+<main>
+<nav aria-label="Contents"><ol>
+<li><a href="#install">Installation</a></li>
+<li><a href="#gemini">Google Gemini API key</a></li>
+<li><a href="#dashboard">Dashboard &amp; quality score</a></li>
+<li><a href="#editor">Listing editor</a></li>
+<li><a href="#metabox">Job edit screen</a></li>
+<li><a href="#submit">Front-end submit form</a></li>
+<li><a href="#salary">Salary &amp; title normalisation</a></li>
+<li><a href="#tags">Job types &amp; tags</a></li>
+<li><a href="#schema">JobPosting schema</a></li>
+<li><a href="#matching">Candidate matching</a></li>
+<li><a href="#bulk">Bulk improve &amp; review</a></li>
+<li><a href="#settings">Settings</a></li>
+<li><a href="#privacy">Privacy &amp; fairness</a></li>
+<li><a href="#hooks">Hooks for developers</a></li>
+<li><a href="#faq">FAQ</a></li>
+<li><a href="#changelog">Changelog</a></li>
+</ol></nav>
+
+<h2 id="install">1. Installation</h2>
+<ol>
+<li>Install and activate <strong>WP Job Manager</strong> from Plugins → Add New (it is free).</li>
+<li>Upload <code>dev3-ai-wp-job-manager.zip</code> in Plugins → Add New → Upload Plugin and activate it.</li>
+<li>In <strong>Job Listings → Settings → Job Submission/Listings</strong>, turn on <em>Enable Job Salary</em>, <em>salary currency</em> and <em>salary unit</em> so normalised salaries have a place to go. Turn on <em>Remote Position</em> if you post remote jobs.</li>
+<li>Open <strong>DEV3 AI Jobs</strong> in the admin menu. Every listing gets a quality score the first time you open the Listings screen.</li>
+</ol>
+<p class="ok">No licence key or activation. Everything except AI writing and AI explanations works right away without an API key.</p>
+
+<h2 id="gemini">2. Google Gemini API key</h2>
+<ol>
+<li>Go to <a href="https://aistudio.google.com/app/apikey">Google AI Studio → API keys</a> and create a key.</li>
+<li>In <strong>DEV3 AI Jobs → API Config</strong>, paste the key and press <em>Save</em>, then <em>Test connection</em>.</li>
+<li>Pick models (defaults: <code>gemini-2.5-flash</code> for everything, <code>gemini-2.5-pro</code> available).</li>
+<li>Set a <strong>monthly budget</strong> (USD). When it is reached, AI pauses and the plugin keeps working with rules and templates.</li>
+</ol>
+<p>Alternatively define the key in <code>wp-config.php</code>: <code>define( 'DEV3JM_GEMINI_API_KEY', '…' );</code>. The key is stored encrypted (AES-256-GCM), only used server-side and never sent to the browser.</p>
+<p><strong>Switches in API Config:</strong> AI on/off (all features), visitor AI on/off (only the submit-form assistant), response cache, PII masking.</p>
+
+<h2 id="dashboard">3. Dashboard &amp; quality score</h2>
+<p>The dashboard shows how many listings you have, their average quality, how many need attention, how many have an unclear salary or exclusionary wording, and how many drafts are waiting in the review queue. The setup card checks WP Job Manager's version, salary fields, job tags and Resume Manager.</p>
+<h3>How the score works (0-100)</h3>
+<div class="table-scroll"><table>
+<tr><th>Check</th><th>Points</th><th>Full points when</th></tr>
+<tr><td>Description length</td><td>25</td><td>250+ words (120+ = 70%, 50+ = 40%)</td></tr>
+<tr><td>Headings and lists</td><td>10</td><td>3+ bullet points and 2+ headings</td></tr>
+<tr><td>Salary</td><td>15</td><td>A readable amount with a pay period</td></tr>
+<tr><td>Job type</td><td>10</td><td>At least one job type</td></tr>
+<tr><td>Location</td><td>10</td><td>A location, or the remote flag</td></tr>
+<tr><td>Company</td><td>5</td><td>Company name filled in</td></tr>
+<tr><td>Title</td><td>10</td><td>No hype words, emojis, shouting or pay in the title</td></tr>
+<tr><td>Tags / categories</td><td>5</td><td>3 or more</td></tr>
+<tr><td>Inclusive wording</td><td>10</td><td>No flagged phrases (each one costs about a third)</td></tr>
+</table></div>
+<p>Scores are recalculated on every save (admin, front-end submission, REST, imports). Filter: <code>dev3jm_quality</code>. The <strong>Quality</strong> column in Job Listings is sortable, and each row has an <em>Improve with DEV3 AI</em> link.</p>
+
+<h2 id="editor">4. Listing editor</h2>
+<p>Open a listing from <strong>DEV3 AI Jobs → Listings</strong>. On the left is the quality checklist; on the right are the tools:</p>
+<ul>
+<li><strong>Description</strong>: add optional notes, pick a tone and press <em>Write with DEV3 AI</em>. The draft appears next to the current text (Changes / Side by side / Draft). Edit it if you like, then <em>Save to listing</em>. Without AI you get a clean outline built from the current text.</li>
+<li><strong>Inclusive language</strong>: <em>Check with DEV3 AI</em> (word list + AI) or <em>Word list only</em>. Untick fixes you do not want and press <em>Apply fixes</em>.</li>
+<li><strong>Salary &amp; title</strong>: <em>Normalise</em> (rules) or <em>Ask DEV3 AI</em>. Check the fields and save; they go into WP Job Manager's own salary, currency and unit fields.</li>
+<li><strong>Types &amp; tags</strong>: suggestions from your existing job types and categories plus skill tags. Tick what you want and save.</li>
+<li><strong>Schema</strong>: the JobPosting JSON-LD WP Job Manager prints for this listing and a Google for Jobs checklist.</li>
+</ul>
+
+<h2 id="metabox">5. Job edit screen</h2>
+<p>The <strong>DEV3 AI Job Assistant</strong> box in the sidebar of the job editor (block or classic editor) shows the saved quality score and offers <em>Write with DEV3 AI</em>, <em>Check wording</em> and <em>Normalise salary &amp; title</em>. Accepted drafts are inserted into the editor and the WP Job Manager fields, so they are saved when you press <em>Update</em>; nothing is written behind the editor's back.</p>
+
+<h2 id="submit">6. Front-end submit form</h2>
+<p>On pages with <code>[submit_job_form]</code>, employers see a <em>Writing assistant</em> under the description:</p>
+<ul>
+<li><strong>Help me write it</strong>: notes + tone → a suggested ad they can use or discard.</li>
+<li><strong>Check wording</strong>: flagged phrases with <em>Replace</em> buttons.</li>
+<li><strong>Suggest type &amp; tags</strong>: selects the job type and adds tags.</li>
+<li>A live <strong>salary reading</strong> under the salary field ("Reads as USD 50,000 – 70,000 per year") with a button to set the currency and period.</li>
+</ul>
+<p>Visitor-facing text is neutral (no plugin branding). The routes are public (employers may not be logged in) but same-origin only, rate-limited per IP (Settings), cached, and fall back to the template/word list when AI is off, paused or failing. When no Job Tags add-on is active, the form also gets a <em>Tags</em> field.</p>
+
+<h2 id="salary">7. Salary &amp; title normalisation</h2>
+<p>Examples the rules understand:</p>
+<div class="table-scroll"><table>
+<tr><th>Input</th><th>Result</th></tr>
+<tr><td><code>$50k-70k/yr</code></td><td>USD 50,000 – 70,000 per year</td></tr>
+<tr><td><code>£30,000 - £35,000 per annum</code></td><td>GBP 30,000 – 35,000 per year</td></tr>
+<tr><td><code>20-25 USD/hour</code></td><td>USD 20 – 25 per hour</td></tr>
+<tr><td><code>€4.5k monthly</code></td><td>EUR 4,500 per month</td></tr>
+<tr><td><code>INR 12 LPA</code></td><td>INR 1,200,000 per year</td></tr>
+<tr><td><code>up to 90000</code> / <code>from 60k</code></td><td>Maximum only / minimum only</td></tr>
+<tr><td><code>Competitive</code></td><td>Flagged: no amount</td></tr>
+</table></div>
+<p>A bare "$" uses your WP Job Manager default currency when it is a dollar currency, otherwise USD. When no pay period is given it is guessed from the amount and flagged for review. DEV3 AI is only asked when the rules cannot read the salary (or when you press <em>Ask DEV3 AI</em>).</p>
+<p>Titles: hype words (rockstar, ninja, guru…), emojis, "URGENT", "!!!" and pay are removed; abbreviations are expanded (Sr → Senior, JS → JavaScript, Mgr → Manager); ALL CAPS becomes Title Case. Seniority (entry, mid, senior, lead, executive) is stored for the schema.</p>
+
+<h2 id="tags">8. Job types &amp; tags</h2>
+<p>Job type rules look for phrases such as "part-time", "20 hours per week", "contract", "internship", "fixed-term". Tags come from your existing tags plus ~120 common skills (filter <code>dev3jm_skill_vocabulary</code>). DEV3 AI is constrained to the job types and categories that exist on your site.</p>
+<p>If the WPJM <em>Job Tags</em> add-on is active, its <code>job_listing_tag</code> taxonomy is used. Otherwise this plugin registers a taxonomy with the same name (Settings → Job tags taxonomy), so your tags carry over if you install the add-on later, and shows tags on the single job page.</p>
+
+<h2 id="schema">9. JobPosting schema</h2>
+<p>The plugin hooks <code>wpjm_get_job_listing_structured_data</code>, so there is still exactly one JSON-LD block. Improvements:</p>
+<ul>
+<li><code>baseSalary</code> with numeric <code>minValue</code>/<code>maxValue</code> (or <code>value</code>), ISO currency and <code>unitText</code>. An unreadable salary is left out instead of printing invalid text.</li>
+<li>Remote jobs: <code>jobLocationType: TELECOMMUTE</code> and <code>applicantLocationRequirements</code> (from geolocation, the location's last part or Settings → Remote applicant country), even without a location.</li>
+<li><code>employmentType</code> for job types without WPJM's employment type meta, plain-text locations turned into a <code>PostalAddress</code>, <code>experienceRequirements</code>, <code>skills</code> (tags), <code>industry</code> (first category) and a stable <code>identifier</code>.</li>
+</ul>
+<p>Turn it off with Settings → Improve JobPosting schema. Filter the result with <code>dev3jm_schema</code>.</p>
+
+<h2 id="matching">10. Candidate matching</h2>
+<p>Requires the <strong>WP Job Manager Resume Manager</strong> add-on (paid, from wpjobmanager.com). Choose a job in <strong>DEV3 AI Jobs → Matching</strong> to rank resumes:</p>
+<ul>
+<li><strong>Skills (40%)</strong>: the job's tags (or skills found in the description) present in the resume's skills or experience.</li>
+<li><strong>Experience (25%)</strong>: years from the resume's experience dates vs. the job's seniority or "N+ years".</li>
+<li><strong>Role fit (20%)</strong>: overlap of the job title with past titles.</li>
+<li><strong>Location (15%)</strong>: 100 for remote jobs, otherwise city/country match.</li>
+</ul>
+<p><em>Explain top 10 with DEV3 AI</em> adds a model review; the final score is the average of the rules and the model, so it stays grounded. Results are stored and can be exported or erased with the WordPress privacy tools.</p>
+<p class="note"><strong>Decision support only.</strong> Scores never change a resume or application, and every candidate stays visible.</p>
+
+<h2 id="bulk">11. Bulk improve &amp; review</h2>
+<ol>
+<li><strong>DEV3 AI Jobs → Bulk improve</strong>: choose listings (low quality, missing salary, missing type/tags, exclusionary wording, all, or the ones selected in Listings).</li>
+<li>Choose improvements: rewrite description, inclusive fixes, normalise salary, clean up titles, suggest types &amp; tags. Toggle DEV3 AI on or off.</li>
+<li>Start: the run uses the core background job queue (WP-Cron; on hosts without working cron it advances while the progress bar is open).</li>
+<li><strong>Review queue</strong>: open each draft to see the changes, edit and accept, or reject. <em>Accept safe changes</em> applies salary, title, seniority, type and tag changes in one go and keeps description rewrites for review.</li>
+</ol>
+
+<h2 id="settings">12. Settings</h2>
+<div class="table-scroll"><table>
+<tr><th>Setting</th><th>Default</th><th>What it does</th></tr>
+<tr><td>Description writer / Inclusive wording check / Job type &amp; tag suggestions</td><td>On</td><td>Buttons in the submit-form assistant.</td></tr>
+<tr><td>Live salary reading</td><td>On</td><td>Reading under the salary field on the submit form.</td></tr>
+<tr><td>Normalise salary on submit</td><td>Off</td><td>Rules only: rewrites clear salaries into WPJM's fields after a submission.</td></tr>
+<tr><td>AI requests per visitor per minute</td><td>10</td><td>Rate limit for the public assistant routes.</td></tr>
+<tr><td>Improve JobPosting schema</td><td>On</td><td>The schema improvements above.</td></tr>
+<tr><td>Remote applicant country</td><td>empty</td><td>Fallback for applicantLocationRequirements.</td></tr>
+<tr><td>Default salary currency</td><td>USD</td><td>Used when neither the listing nor WPJM has one.</td></tr>
+<tr><td>Job tags taxonomy</td><td>On</td><td>Registers job tags when the Job Tags add-on is missing.</td></tr>
+<tr><td>Quality column</td><td>On</td><td>Column in Job Listings.</td></tr>
+<tr><td>Default writing tone</td><td>Professional</td><td>Writer default.</td></tr>
+<tr><td>DEV3 AI match explanations</td><td>On</td><td>Off = rules-only scores.</td></tr>
+<tr><td>Listings per background step</td><td>3</td><td>Bulk chunk size.</td></tr>
+</table></div>
+
+<h2 id="privacy">13. Privacy &amp; fairness</h2>
+<ul>
+<li>Listing text goes to Google Gemini only for AI features and only with your key. Resume data for matching is built from an allow-list (headline, city/region, skills, experience titles/employers/dates/notes, education), free text is masked (emails, phones, card numbers, IPs), the candidate's name is replaced, and self-declared protected attributes ("Gender: …", "Date of birth …") are removed.</li>
+<li>Never used or sent: name, email, phone, photo, video, links, age/date of birth, gender, marital or family status, nationality, ethnicity, religion, disability, health, sexual orientation, union membership, political views, street address.</li>
+<li>Privacy policy text is added under Settings → Privacy. Tools → Export/Erase Personal Data include match scores (found through the resume's email or author).</li>
+<li>Uninstall removes plugin data only when "Delete data on uninstall" is on (API Config).</li>
+</ul>
+
+<h2 id="hooks">14. Hooks for developers</h2>
+<div class="table-scroll"><table>
+<tr><th>Hook</th><th>Type</th><th>Use</th></tr>
+<tr><td><code>dev3jm_inclusive_rules</code></td><td>filter</td><td>Word list: regex =&gt; [ reason, suggestion ].</td></tr>
+<tr><td><code>dev3jm_type_rules</code></td><td>filter</td><td>Job type keyword rules: term slug =&gt; regex.</td></tr>
+<tr><td><code>dev3jm_skill_vocabulary</code></td><td>filter</td><td>Skill names used for tags and matching.</td></tr>
+<tr><td><code>dev3jm_title_abbreviations</code>, <code>dev3jm_title_hype_words</code></td><td>filter</td><td>Title clean-up lists.</td></tr>
+<tr><td><code>dev3jm_quality</code></td><td>filter</td><td>Change a listing's quality result.</td></tr>
+<tr><td><code>dev3jm_schema</code></td><td>filter</td><td>Final JobPosting array.</td></tr>
+<tr><td><code>dev3jm_protected_attributes</code>, <code>dev3jm_match_payload</code></td><td>filter</td><td>Audit or extend what matching removes / sends.</td></tr>
+<tr><td><code>dev3jm_resumes_active</code></td><td>filter</td><td>Force Resume Manager detection.</td></tr>
+<tr><td><code>dev3jm_prompt_dev3jm_describe</code> (and <code>_inclusive</code>, <code>_normalise</code>, <code>_suggest</code>, <code>_match</code>)</td><td>filter</td><td>Override prompt templates.</td></tr>
+<tr><td><code>dev3jm_public_rate_limit</code></td><td>filter</td><td>Per-IP limit for public routes.</td></tr>
+<tr><td><code>dev3jm_listing_applied</code></td><td>action</td><td>Fires after accepted changes are written: <code>( $post_id, $fields )</code>.</td></tr>
+</table></div>
+<p>REST namespace <code>dev3jm/v1</code>: <code>overview</code>, <code>listings</code>, <code>listings/&lt;id&gt;</code>, <code>listings/&lt;id&gt;/apply</code>, <code>ai/write|inclusive|normalise|suggest</code>, <code>bulk</code>, <code>bulk/recent</code>, <code>drafts</code>, <code>drafts/&lt;id&gt;/accept|reject</code>, <code>drafts/accept-safe</code>, <code>matching</code>, <code>matching/&lt;id&gt;</code>, <code>matching/&lt;id&gt;/score</code>, <code>public/write|inclusive|suggest|salary</code>.</p>
+
+<h2 id="faq">15. FAQ</h2>
+<h3>Does it change my listings automatically?</h3>
+<p>No. AI and bulk results are drafts; listings change only when you accept. The only automatic change is the optional, rules-only "Normalise salary on submit".</p>
+<h3>I don't see the assistant on the submit form.</h3>
+<p>Check that the page uses <code>[submit_job_form]</code> and that at least one submit-form feature is on in Settings. The salary reading needs WPJM's salary field enabled.</p>
+<h3>Bulk runs stay at 0%.</h3>
+<p>Your host's WP-Cron may be off. Keep the Bulk improve screen open: the progress bar advances the run itself after 30 seconds.</p>
+<h3>Does matching work without Resume Manager?</h3>
+<p>No, it reads Resume Manager's resumes. Everything else works without it.</p>
+<h3>Which WP Job Manager versions are supported?</h3>
+<p>1.36 or later (salary fields). Tested with 2.4.</p>
+
+<h2 id="changelog">16. Changelog</h2>
+<p><strong>1.0.0</strong> – First release.</p>
+</main>
+</body>
+</html>

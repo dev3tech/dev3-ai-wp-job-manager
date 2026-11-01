@@ -1,0 +1,86 @@
+/* Submit-form assistant: inherits theme fonts; colours via custom properties; reset hardened against theme button styles. */
+.dev3jm-assist {
+	--dev3jm-accent: #3f3bd6;
+	--dev3jm-accent-ink: #fff;
+	--dev3jm-line: rgba( 0, 0, 0, .16 );
+	--dev3jm-tint: rgba( 63, 59, 214, .06 );
+	--dev3jm-ok: #05683f;
+	--dev3jm-err: #b42318;
+	--dev3jm-round: 8px;
+	box-sizing: border-box;
+	margin: 0 0 1.5em;
+	padding: 16px;
+	border: 1px solid var( --dev3jm-line );
+	border-radius: var( --dev3jm-round );
+	background: var( --dev3jm-tint );
+	font: inherit;
+	color: inherit;
+	max-width: 100%;
+}
+.dev3jm-assist[hidden] { display: none; }
+.dev3jm-assist *, .dev3jm-assist *::before, .dev3jm-assist *::after { box-sizing: border-box; }
+.dev3jm-assist .dev3jm-assist__title { margin: 0 0 4px; font-weight: 700; font-size: 1em; }
+.dev3jm-assist .dev3jm-assist__hint { margin: 0 0 12px; font-size: .9em; opacity: .85; }
+.dev3jm-assist .dev3jm-assist__bar, .dev3jm-assist .dev3jm-assist__actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.dev3jm-assist .dev3jm-assist__actions { margin-top: 12px; }
+.dev3jm-assist .dev3jm-assist__body:not( :empty ) { margin-top: 12px; padding-top: 12px; border-top: 1px solid var( --dev3jm-line ); }
+.dev3jm-assist .dev3jm-assist__live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset( 50% ); white-space: nowrap; margin: 0; }
+.dev3jm-assist .dev3jm-assist__label { display: block; margin: 8px 0 4px; font-weight: 600; font-size: .9em; }
+.dev3jm-assist .dev3jm-assist__input:not( #dev3jm-x ) { display: block; width: 100%; max-width: 100%; min-height: 44px; margin: 0; padding: 8px 12px; font: inherit; color: inherit; background: #fff; border: 1px solid var( --dev3jm-line ); border-radius: var( --dev3jm-round ); box-shadow: none; }
+.dev3jm-assist .dev3jm-assist__input:not( #dev3jm-x ):focus-visible { outline: 2px solid var( --dev3jm-accent ); outline-offset: 1px; }
+
+.dev3jm-assist button.dev3jm-assist__btn:not( #dev3jm-x ) {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 44px;
+	min-width: 44px;
+	margin: 0;
+	padding: 8px 16px;
+	border: 1px solid var( --dev3jm-accent );
+	border-radius: var( --dev3jm-round );
+	background: transparent;
+	color: var( --dev3jm-accent );
+	font: inherit;
+	font-size: .95em;
+	font-weight: 600;
+	line-height: 1.2;
+	text-transform: none;
+	letter-spacing: normal;
+	text-decoration: none;
+	box-shadow: none;
+	cursor: pointer;
+	width: auto;
+}
+.dev3jm-assist button.dev3jm-assist__btn.is-primary:not( #dev3jm-x ) { background: var( --dev3jm-accent ); color: var( --dev3jm-accent-ink ); }
+.dev3jm-assist button.dev3jm-assist__btn:not( #dev3jm-x ):hover { filter: brightness( .93 ); }
+.dev3jm-assist button.dev3jm-assist__btn:not( #dev3jm-x ):focus-visible, .dev3jm-salary button:not( #dev3jm-x ):focus-visible { outline: 2px solid var( --dev3jm-accent ); outline-offset: 2px; }
+.dev3jm-assist button.dev3jm-assist__btn:not( #dev3jm-x ):disabled { opacity: .6; cursor: progress; }
+.dev3jm-assist button.dev3jm-assist__btn.is-busy:not( #dev3jm-x )::after { content: ""; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: dev3jm-spin .8s linear infinite; }
+@keyframes dev3jm-spin { to { transform: rotate( 360deg ); } }
+@media ( prefers-reduced-motion: reduce ) {
+	.dev3jm-assist button.dev3jm-assist__btn.is-busy:not( #dev3jm-x )::after { animation: none; }
+}
+
+.dev3jm-assist .dev3jm-assist__preview { margin-top: 12px; padding: 12px 16px; max-height: 360px; overflow: auto; background: rgba( 255, 255, 255, .85 ); color: #1f2328; border: 1px solid var( --dev3jm-line ); border-radius: var( --dev3jm-round ); line-height: 1.55; }
+.dev3jm-assist .dev3jm-assist__preview h3 { font-size: 1em; margin: 12px 0 4px; }
+.dev3jm-assist .dev3jm-assist__preview ul { margin: 0 0 8px 1.2em; padding: 0; list-style: disc; }
+.dev3jm-assist .dev3jm-assist__issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dev3jm-assist .dev3jm-assist__issues li { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba( 255, 255, 255, .7 ); border: 1px solid var( --dev3jm-line ); border-radius: var( --dev3jm-round ); margin: 0; }
+.dev3jm-assist .dev3jm-assist__issues span { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.dev3jm-assist .dev3jm-assist__issues small { opacity: .8; }
+.dev3jm-assist .dev3jm-assist__ok { color: var( --dev3jm-ok ); margin: 8px 0 0; font-weight: 600; }
+.dev3jm-assist .dev3jm-assist__err { color: var( --dev3jm-err ); margin: 8px 0 0; }
+@media ( max-width: 480px ) {
+	.dev3jm-assist { padding: 12px; }
+	.dev3jm-assist .dev3jm-assist__bar button.dev3jm-assist__btn:not( #dev3jm-x ) { flex: 1 1 100%; }
+	.dev3jm-assist .dev3jm-assist__issues li { flex-direction: column; align-items: stretch; }
+}
+
+.dev3jm-salary { margin: 6px 0 0; font-size: .9em; min-height: 1.4em; }
+.dev3jm-salary.is-ok { color: #05683f; }
+.dev3jm-salary.is-tip { opacity: .85; }
+.dev3jm-salary button.dev3jm-assist__link:not( #dev3jm-x ) { appearance: none; background: none; border: 0; padding: 4px 0; margin: 0; min-height: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; box-shadow: none; text-transform: none; }
+.dev3jm-tags a { text-decoration: none; }
